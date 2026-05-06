@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta, UTC
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,7 +83,7 @@ async def create_entry(db: AsyncSession, user_id: str, data: EntryCreate) -> Ent
 async def update_entry(db: AsyncSession, entry: Entry, data: EntryUpdate) -> Entry:
     for key, value in data.model_dump(exclude_none=True).items():
         setattr(entry, key, value)
-    entry.updated_at = datetime.now(UTC)
+    entry.updated_at = datetime.utcnow()
     await db.flush()
     return entry
 

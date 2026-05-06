@@ -1,0 +1,78 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.coverage
+.coverage.*
+htmlcov/
+
+# ─── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ─── FastAPI / SQLAlchemy / Alembic ───────────────────────────────────────────
+*.db
+*.sqlite3
+alembic/versions/*.pyc
+
+# ─── Uploads ──────────────────────────────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ─── Environment files ────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+
+# ─── React / Vite ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Secrets / TLS ────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+acme.json

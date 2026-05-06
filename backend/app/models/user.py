@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, UTC
+from datetime import datetime
 
 from sqlalchemy import String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,6 +13,6 @@ class User(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())
 
     entries: Mapped[list["Entry"]] = relationship("Entry", back_populates="user")

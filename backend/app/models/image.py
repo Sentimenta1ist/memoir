@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, UTC
+from datetime import datetime
 
 from sqlalchemy import String, DateTime, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,6 +15,6 @@ class Image(Base):
     filename: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
     position: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())
 
     entry: Mapped["Entry"] = relationship("Entry", back_populates="images")

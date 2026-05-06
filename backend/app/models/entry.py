@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, UTC
+from datetime import date, datetime
 
 from sqlalchemy import String, Date, DateTime, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -17,8 +17,8 @@ class Entry(Base):
     day_text: Mapped[str | None] = mapped_column(Text)
     thought_text: Mapped[str | None] = mapped_column(Text)
     tomorrow_text: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     user: Mapped["User"] = relationship("User", back_populates="entries")
     images: Mapped[list["Image"]] = relationship(

@@ -8,6 +8,8 @@ body {
 
 /* === CSS Variables === */
 :root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --bg: #09090f;
   --b1: #111119;
   --b2: #18181f;
@@ -55,7 +57,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 20px 14px;
+  padding: max(env(safe-area-inset-top, 28px), 28px) 20px 14px;
 }
 
 /* === Logo === */
@@ -431,7 +433,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px 12px;
+  padding: max(env(safe-area-inset-top, 28px), 28px) 14px 12px;
   gap: 12px;
 }
 .write-date {
@@ -581,7 +583,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px 12px;
+  padding: max(env(safe-area-inset-top, 28px), 28px) 14px 12px;
   gap: 12px;
 }
 .read-date {

@@ -20,16 +20,10 @@ def _compress(data: bytes, original_suffix: str) -> tuple[bytes, str]:
     try:
         img = Image.open(BytesIO(data))
         img = ImageOps.exif_transpose(img)
-        if max(img.width, img.height) > 1600:
-            img.thumbnail((1600, 1600), Image.LANCZOS)
-        if img.mode == "RGBA":
-            background = Image.new("RGB", img.size, (255, 255, 255))
-            background.paste(img, mask=img.split()[3])
-            img = background
-        else:
-            img = img.convert("RGB")
+        img = img.convert("RGB")
+        img.thumbnail((1200, 1200), Image.LANCZOS)
         buf = BytesIO()
-        img.save(buf, format="WebP", quality=82, method=4)
+        img.save(buf, format="WebP", quality=72, method=4)
         return (buf.getvalue(), ".webp")
     except Exception:
         logger.warning("Image compression failed, using original", exc_info=True)

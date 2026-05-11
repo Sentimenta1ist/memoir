@@ -1,68 +1,78 @@
-import { Fragment } from 'react'
+import { useEffect, useState } from 'react'
 import { imgUrl } from '../api/client'
 
 interface ImageFlowProps {
-  images: { url: string }[]
-  text: string
+  images: { id: string; url: string; filename: string }[]
+  dayText: string
+  apiBase: string
 }
 
-const SHAPES = [
-  { cls: 'fi-circle-r', size: 110 },
-  { cls: 'fi-circle-l', size: 96 },
-  { cls: 'fi-square-r', size: 130 },
-  { cls: 'fi-circle-l', size: 100 },
-  { cls: 'fi-square-l', size: 118 },
+const SLOTS = [
+  { float: 'right' as const, borderRadius: '50%', size: 120 },
+  { float: 'left' as const, borderRadius: '14px', size: 110 },
+  { float: 'right' as const, borderRadius: '50%', size: 108 },
 ]
 
-function FloatImage({ url, shapeIdx }: { url: string; shapeIdx: number }) {
-  const s = SHAPES[shapeIdx % 5]
-  return (
-    <div className={`fi ${s.cls}`} style={{ width: s.size, height: s.size }}>
-      <img src={imgUrl(url)} alt="" />
-    </div>
-  )
+function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
 }
 
-export default function ImageFlow({ images, text }: ImageFlowProps) {
-  const N = images.length
+export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) {
+  const [picks, setPicks] = useState<(string | null)[]>([null, null, null])
 
-  if (N === 0) {
-    return (
-      <div className="image-flow">
-        <p>{text}</p>
-      </div>
-    )
-  }
+  useEffect(() => {
+    fetch(`${apiBase}/static/placeholders/index`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { files: string[] } | null) => {
+        if (!data) return
+        setPicks(SLOTS.map(() => pickRandom(data.files)))
+      })
+      .catch(() => { /* graceful degradation */ })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiBase])
 
-  const sentences = text.split(/(?<=[.!?…])\s+/).filter((s) => s.trim())
-
-  if (sentences.length <= 2) {
-    return (
-      <div className="image-flow">
-        {images.map((img, i) => (
-          <FloatImage key={i} url={img.url} shapeIdx={i} />
-        ))}
-        <p>{text}</p>
-      </div>
-    )
-  }
-
-  const groups: string[][] = Array.from({ length: N + 1 }, () => [])
-  const groupSize = sentences.length / (N + 1)
+  const sentences = dayText.split(/(?<=[.!?])\s+/).filter((s) => s.trim())
+  const groups: string[][] = [[], [], [], []]
+  const perGroup = sentences.length / 4
   sentences.forEach((s, i) => {
-    const gi = Math.min(Math.floor(i / groupSize), N)
+    const gi = Math.min(Math.floor(i / perGroup), 3)
     groups[gi].push(s)
   })
 
   return (
-    <div className="image-flow">
+    <div className="image-flow" style={{ display: 'block' }}>
       {groups[0].length > 0 && <p>{groups[0].join(' ')}</p>}
-      {images.map((img, i) => (
-        <Fragment key={i}>
-          <FloatImage url={img.url} shapeIdx={i} />
-          {groups[i + 1]?.length > 0 && <p>{groups[i + 1].join(' ')}</p>}
-        </Fragment>
-      ))}
+
+      {SLOTS.map((slot, i) => {
+        const userImg = images[i]
+        const placeholder = picks[i]
+        const hasImage = !!userImg
+        const src = hasImage
+          ? imgUrl(userImg.url)
+          : placeholder
+            ? `${apiBase}/static/placeholders/${placeholder}`
+            : null
+
+        return (
+          <span key={i}>
+            {src && (
+              <div
+                className={`fi fi-${slot.float === 'right' ? (slot.borderRadius === '50%' ? 'circle-r' : 'square-r') : (slot.borderRadius === '50%' ? 'circle-l' : 'square-l')}`}
+                style={{
+                  width: slot.size,
+                  height: slot.size,
+                  float: slot.float,
+                  borderRadius: slot.borderRadius,
+                  opacity: hasImage ? 1 : 0.45,
+                }}
+              >
+                <img src={src} alt="" />
+              </div>
+            )}
+            {groups[i + 1]?.length > 0 && <p>{groups[i + 1].join(' ')}</p>}
+          </span>
+        )
+      })}
     </div>
   )
 }

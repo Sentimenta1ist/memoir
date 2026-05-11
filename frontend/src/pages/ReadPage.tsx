@@ -5,6 +5,8 @@ import { useToastStore } from '../store/toastStore'
 import ImageFlow from '../components/ImageFlow'
 import type { EntryResponse } from '../types'
 
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+
 function formatDate(dateStr: string) {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
@@ -59,7 +61,7 @@ export default function ReadPage() {
         {entry.day_text && (
           <div className="read-section">
             <div className="read-section-label">Day</div>
-            <ImageFlow images={entry.images} text={entry.day_text} />
+            <ImageFlow images={entry.images} dayText={entry.day_text} apiBase={API_BASE} />
           </div>
         )}
 

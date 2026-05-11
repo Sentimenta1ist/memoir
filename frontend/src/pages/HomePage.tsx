@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import client, { imgUrl } from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -15,29 +15,45 @@ function formatDate(dateStr: string) {
 }
 
 function EntryCard({ entry }: { entry: EntryResponse }) {
+  const navigate = useNavigate()
   const imgs = entry.images
   return (
-    <Link to={`/entry/${entry.id}`} className="ec">
-      <div className="ec-date">{formatDate(entry.date)}</div>
-      {entry.day_text && <div className="ec-day">{entry.day_text}</div>}
-      {entry.thought_text && <div className="ec-thought">{entry.thought_text}</div>}
-      {imgs.length > 0 && (
-        <div className="ec-images">
-          {imgs[0] && (
-            <img className="ec-th" src={imgUrl(imgs[0].url)} alt="" />
-          )}
-          {imgs[1] && (
-            <img className="ec-sq" src={imgUrl(imgs[1].url)} alt="" />
-          )}
-          {imgs.slice(2, 3).map((img) => (
-            <img key={img.id} className="ec-th" src={imgUrl(img.url)} alt="" />
-          ))}
-          {imgs.length > 3 && (
-            <div className="ec-badge">+{imgs.length - 3}</div>
-          )}
-        </div>
-      )}
-    </Link>
+    <div
+      className="entry-card"
+      onClick={() => navigate(`/entry/${entry.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(`/entry/${entry.id}`)}
+    >
+      <div className="entry-card__main">
+        <div className="ec-date">{formatDate(entry.date)}</div>
+        {entry.day_text && <div className="ec-day">{entry.day_text}</div>}
+        {entry.thought_text && <div className="ec-thought">{entry.thought_text}</div>}
+        {imgs.length > 0 && (
+          <div className="ec-images">
+            {imgs[0] && <img className="ec-th" src={imgUrl(imgs[0].url)} alt="" />}
+            {imgs[1] && <img className="ec-sq" src={imgUrl(imgs[1].url)} alt="" />}
+            {imgs.slice(2, 3).map((img) => (
+              <img key={img.id} className="ec-th" src={imgUrl(img.url)} alt="" />
+            ))}
+            {imgs.length > 3 && (
+              <div className="ec-badge">+{imgs.length - 3}</div>
+            )}
+          </div>
+        )}
+      </div>
+      <button
+        className="entry-card__edit"
+        onClick={(e) => {
+          e.stopPropagation()
+          navigate(`/write/${entry.id}`)
+        }}
+        aria-label="Edit entry"
+        title="Edit"
+      >
+        ✎
+      </button>
+    </div>
   )
 }
 
@@ -56,14 +72,6 @@ export default function HomePage() {
   const today = new Date().toISOString().slice(0, 10)
   const todayEntry = data?.items.find((e) => e.date === today)
   const streak = data?.streak ?? 0
-
-  const handleFab = () => {
-    if (todayEntry) {
-      navigate(`/write/${todayEntry.id}`)
-    } else {
-      navigate('/write')
-    }
-  }
 
   const handleLogout = () => {
     clear()
@@ -91,17 +99,22 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div
-        className={`today-pill${todayEntry ? ' done' : ' pending'}`}
-        style={{ display: 'flex' }}
-      >
+      <div className="today-pill-row">
         {todayEntry ? (
-          <>today&rsquo;s entry saved ✓</>
+          <button
+            className="today-pill done today-pill-btn"
+            onClick={() => navigate(`/write/${todayEntry.id}`)}
+          >
+            Today · edit ✎
+          </button>
         ) : (
-          <>
+          <button
+            className="today-pill pending today-pill-btn"
+            onClick={() => navigate('/write')}
+          >
             <span className="pulse-dot" />
-            no entry yet today
-          </>
+            + write today
+          </button>
         )}
       </div>
 
@@ -127,7 +140,7 @@ export default function HomePage() {
         </div>
       )}
 
-      <button className="fab" onClick={handleFab} aria-label="Write entry">
+      <button className="fab" onClick={() => todayEntry ? navigate(`/write/${todayEntry.id}`) : navigate('/write')} aria-label="Write entry">
         +
       </button>
 

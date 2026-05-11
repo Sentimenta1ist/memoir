@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
@@ -18,6 +19,8 @@ from app.routes.images import router as images_router
 from app.services.auth import hash_password
 
 logger = logging.getLogger(__name__)
+
+_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "static", "placeholders")
 
 
 async def seed_default_user():
@@ -49,6 +52,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/static/placeholders/index")
+async def placeholders_index():
+    if not os.path.isdir(_PLACEHOLDERS_DIR):
+        return JSONResponse({"files": []})
+    files = sorted(
+        f for f in os.listdir(_PLACEHOLDERS_DIR)
+        if os.path.isfile(os.path.join(_PLACEHOLDERS_DIR, f)) and not f.startswith(".")
+    )
+    return JSONResponse({"files": files})
+
+
+if os.path.isdir(_PLACEHOLDERS_DIR):
+    app.mount("/static/placeholders", StaticFiles(directory=_PLACEHOLDERS_DIR), name="placeholders")
 
 app.mount("/static", StaticFiles(directory=settings.UPLOAD_DIR), name="static")
 

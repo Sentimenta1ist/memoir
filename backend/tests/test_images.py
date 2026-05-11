@@ -94,6 +94,59 @@ async def test_upload_non_image(client, auth_headers, tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_upload_wrong_magic_bytes(client, auth_headers, tmp_path, monkeypatch):
+    """File claims to be image/jpeg but has no valid image magic bytes."""
+    monkeypatch.setattr("app.config.settings.UPLOAD_DIR", str(tmp_path))
+    monkeypatch.setattr("app.services.image_service.settings.UPLOAD_DIR", str(tmp_path))
+
+    entry_id = await _create_entry(client, auth_headers)
+    fake_data = b"This is not an image at all, just text bytes."
+    resp = await client.post(
+        f"/entries/{entry_id}/images",
+        headers=auth_headers,
+        files={"file": ("photo.jpg", io.BytesIO(fake_data), "image/jpeg")},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_upload_oversized_file(client, auth_headers, tmp_path, monkeypatch):
+    """File larger than 10 MB must be rejected."""
+    monkeypatch.setattr("app.config.settings.UPLOAD_DIR", str(tmp_path))
+    monkeypatch.setattr("app.services.image_service.settings.UPLOAD_DIR", str(tmp_path))
+
+    entry_id = await _create_entry(client, auth_headers)
+    big_data = b"\xff\xd8\xff" + b"\x00" * (10 * 1024 * 1024 + 1)
+    resp = await client.post(
+        f"/entries/{entry_id}/images",
+        headers=auth_headers,
+        files={"file": ("big.jpg", io.BytesIO(big_data), "image/jpeg")},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_upload_produces_webp(client, auth_headers, tmp_path, monkeypatch):
+    """Valid JPEG upload should be stored as .webp when Pillow is available."""
+    monkeypatch.setattr("app.config.settings.UPLOAD_DIR", str(tmp_path))
+    monkeypatch.setattr("app.services.image_service.settings.UPLOAD_DIR", str(tmp_path))
+
+    entry_id = await _create_entry(client, auth_headers)
+    resp = await client.post(
+        f"/entries/{entry_id}/images",
+        headers=auth_headers,
+        files={"file": ("photo.jpg", io.BytesIO(JPEG), "image/jpeg")},
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    try:
+        from PIL import Image  # noqa: F401
+        assert data["filename"].endswith(".webp"), "Pillow available — expected .webp output"
+    except ImportError:
+        pass  # Pillow not installed in this environment, skip webp assertion
+
+
+@pytest.mark.asyncio
 async def test_upload_to_other_user_entry(client, auth_headers, tmp_path, monkeypatch):
     monkeypatch.setattr("app.config.settings.UPLOAD_DIR", str(tmp_path))
     monkeypatch.setattr("app.services.image_service.settings.UPLOAD_DIR", str(tmp_path))

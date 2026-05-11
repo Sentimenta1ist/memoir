@@ -753,7 +753,7 @@ cp backend/.env.example backend/.env
 # Edit backend/.env — set SECRET_KEY to anything for local use
 
 # 2. Start all services
-docker-compose up --build
+docker-compose up --build 
 
 # Backend API:    http://localhost:8000
 # Frontend app:   http://localhost:5173

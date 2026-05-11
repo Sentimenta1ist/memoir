@@ -20,7 +20,7 @@ from app.services.auth import hash_password
 
 logger = logging.getLogger(__name__)
 
-_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "static", "placeholders")
+_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "placeholders")
 
 
 async def seed_default_user():

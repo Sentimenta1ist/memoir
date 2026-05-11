@@ -42,17 +42,6 @@ function EntryCard({ entry }: { entry: EntryResponse }) {
           </div>
         )}
       </div>
-      <button
-        className="entry-card__edit"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/write/${entry.id}`)
-        }}
-        aria-label="Edit entry"
-        title="Edit"
-      >
-        ✎
-      </button>
     </div>
   )
 }
@@ -110,12 +99,9 @@ export default function HomePage() {
 
       <div className="today-pill-row">
         {todayEntry ? (
-          <button
-            className="today-pill done today-pill-btn"
-            onClick={() => navigate(`/write/${todayEntry.id}`)}
-          >
-            Today · edit ✎
-          </button>
+          <span className="today-pill done">
+            Today ✓
+          </span>
         ) : (
           <button
             className="today-pill pending today-pill-btn"

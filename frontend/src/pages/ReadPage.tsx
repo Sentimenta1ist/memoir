@@ -195,7 +195,13 @@ export default function ReadPage() {
             'day',
             <>
               <div className="read-section-label">Day</div>
-              <ImageFlow images={entry.images} dayText={entry.day_text} apiBase={API_BASE} />
+              <ImageFlow
+                images={entry.images}
+                dayText={entry.day_text}
+                apiBase={API_BASE}
+                entryId={id}
+                onImagesChange={() => queryClient.invalidateQueries({ queryKey: ['entry', id] })}
+              />
             </>
           )}
 

@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
-import { imgUrl } from '../api/client'
+import { useEffect, useRef, useState } from 'react'
+import client, { imgUrl } from '../api/client'
 
 interface ImageFlowProps {
   images: { id: string; url: string; filename: string }[]
   dayText: string
   apiBase: string
+  entryId?: string
+  onImagesChange?: () => void
 }
 
 const SLOTS = [
@@ -17,8 +19,22 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) {
+function PencilIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12.5 2.5l3 3-9.5 9.5-3.5.5.5-3.5 9.5-9.5z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+export default function ImageFlow({ images, dayText, apiBase, entryId, onImagesChange }: ImageFlowProps) {
   const [picks, setPicks] = useState<(string | null)[]>([null, null, null])
+  const fileRefs = useRef<(HTMLInputElement | null)[]>([null, null, null])
 
   useEffect(() => {
     fetch(`${apiBase}/static/placeholders/index`)
@@ -30,6 +46,18 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
       .catch(() => { /* graceful degradation */ })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase])
+
+  const handleReplace = async (i: number, file: File) => {
+    const userImg = images[i]
+    if (!userImg || !entryId) return
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      await client.post(`/entries/${entryId}/images`, form)
+      await client.delete(`/entries/${entryId}/images/${userImg.id}`)
+      onImagesChange?.()
+    } catch { /* graceful degradation */ }
+  }
 
   const sentences = dayText.split(/(?<=[.!?…])\s+/).filter((s) => s.trim())
   const groups: string[][] = [[], [], [], []]
@@ -58,9 +86,8 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
         return (
           <span key={i}>
             {src && (
-              <img
-                src={src}
-                alt=""
+              <div
+                className={hasImage ? 'img-replace-wrap' : undefined}
                 style={{
                   float: slot.side,
                   width: slot.size,
@@ -68,13 +95,41 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
                   shapeOutside: shapeVal,
                   clipPath: shapeVal,
                   margin,
-                  objectFit: 'cover',
-                  display: 'block',
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                  opacity: hasImage ? 1 : 0.45,
+                  position: 'relative',
                 }}
-              />
+                onClick={hasImage ? () => fileRefs.current[i]?.click() : undefined}
+              >
+                <img
+                  src={src}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                    userSelect: 'none',
+                    opacity: hasImage ? 1 : 0.45,
+                  }}
+                />
+                {hasImage && (
+                  <>
+                    <div className="img-replace-overlay">
+                      <PencilIcon />
+                    </div>
+                    <input
+                      ref={(el) => { fileRefs.current[i] = el }}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleReplace(i, file)
+                        e.target.value = ''
+                      }}
+                    />
+                  </>
+                )}
+              </div>
             )}
             {groups[i + 1]?.length > 0 && <p>{groups[i + 1].join(' ')}</p>}
           </span>

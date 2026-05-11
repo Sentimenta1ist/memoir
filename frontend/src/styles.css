@@ -624,6 +624,26 @@ body {
   clear: both;
 }
 
+/* Photo replace overlay */
+.img-replace-wrap {
+  cursor: pointer;
+}
+.img-replace-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.38);
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.img-replace-wrap:hover .img-replace-overlay {
+  opacity: 1;
+}
+
 /* Float shapes */
 .fi {
   overflow: hidden;

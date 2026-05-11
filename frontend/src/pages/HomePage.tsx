@@ -82,9 +82,18 @@ export default function HomePage() {
     <div className="page">
       <div className="header">
         <span className="logo">MEMOIR</span>
-        <button className="icon-btn" onClick={() => setInfoOpen(true)} aria-label="Info">
-          •••
-        </button>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button className="icon-btn" onClick={() => navigate('/calendar')} aria-label="Calendar">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="3" width="16" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M1 7h16" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M5 1v4M13 1v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button className="icon-btn" onClick={() => setInfoOpen(true)} aria-label="Info">
+            •••
+          </button>
+        </div>
       </div>
 
       <div className="sc">

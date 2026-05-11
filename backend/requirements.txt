@@ -10,7 +10,7 @@ bcrypt
 python-jose[cryptography]
 python-multipart
 email-validator
-Pillow==10.4.0
+Pillow>=10.3.0
 pytest
 pytest-asyncio
 httpx

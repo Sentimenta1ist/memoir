@@ -8,9 +8,9 @@ interface ImageFlowProps {
 }
 
 const SLOTS = [
-  { float: 'right' as const, borderRadius: '50%', size: 120 },
-  { float: 'left' as const, borderRadius: '14px', size: 110 },
-  { float: 'right' as const, borderRadius: '50%', size: 108 },
+  { side: 'right' as const, shape: 'circle' as const, size: 120 },
+  { side: 'left' as const, shape: 'square' as const, size: 110 },
+  { side: 'right' as const, shape: 'circle' as const, size: 108 },
 ]
 
 function pickRandom<T>(arr: T[]): T {
@@ -22,7 +22,7 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
 
   useEffect(() => {
     fetch(`${apiBase}/static/placeholders/index`)
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data: { files: string[] } | null) => {
         if (!data) return
         setPicks(SLOTS.map(() => pickRandom(data.files)))
@@ -31,7 +31,7 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiBase])
 
-  const sentences = dayText.split(/(?<=[.!?])\s+/).filter((s) => s.trim())
+  const sentences = dayText.split(/(?<=[.!?…])\s+/).filter((s) => s.trim())
   const groups: string[][] = [[], [], [], []]
   const perGroup = sentences.length / 4
   sentences.forEach((s, i) => {
@@ -45,29 +45,36 @@ export default function ImageFlow({ images, dayText, apiBase }: ImageFlowProps) 
 
       {SLOTS.map((slot, i) => {
         const userImg = images[i]
-        const placeholder = picks[i]
         const hasImage = !!userImg
         const src = hasImage
           ? imgUrl(userImg.url)
-          : placeholder
-            ? `${apiBase}/static/placeholders/${placeholder}`
+          : picks[i]
+            ? `${apiBase}/static/placeholders/${picks[i]}`
             : null
+        const isCircle = slot.shape === 'circle'
+        const shapeVal = isCircle ? 'circle(50%)' : 'inset(6px round 18px)'
+        const margin = slot.side === 'right' ? '0 0 12px 16px' : '0 16px 12px 0'
 
         return (
           <span key={i}>
             {src && (
-              <div
-                className={`fi fi-${slot.float === 'right' ? (slot.borderRadius === '50%' ? 'circle-r' : 'square-r') : (slot.borderRadius === '50%' ? 'circle-l' : 'square-l')}`}
+              <img
+                src={src}
+                alt=""
                 style={{
+                  float: slot.side,
                   width: slot.size,
                   height: slot.size,
-                  float: slot.float,
-                  borderRadius: slot.borderRadius,
+                  shapeOutside: shapeVal,
+                  clipPath: shapeVal,
+                  margin,
+                  objectFit: 'cover',
+                  display: 'block',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
                   opacity: hasImage ? 1 : 0.45,
                 }}
-              >
-                <img src={src} alt="" />
-              </div>
+              />
             )}
             {groups[i + 1]?.length > 0 && <p>{groups[i + 1].join(' ')}</p>}
           </span>

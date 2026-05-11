@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import client, { imgUrl } from '../api/client'
 import { useToastStore } from '../store/toastStore'
@@ -27,6 +27,12 @@ interface PendingFile {
 export default function WritePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const paramDate = searchParams.get('date')
+  const initialDate =
+    paramDate && /^\d{4}-\d{2}-\d{2}$/.test(paramDate)
+      ? paramDate
+      : new Date().toISOString().slice(0, 10)
   const queryClient = useQueryClient()
   const { showToast } = useToastStore()
 
@@ -69,7 +75,8 @@ export default function WritePage() {
     })
   }, [entry])
 
-  const displayDate = formatDate(entry?.date ?? new Date().toISOString().slice(0, 10))
+  const dateStr = entry?.date ?? initialDate
+  const displayDate = formatDate(dateStr)
 
   const totalSlots = savedImages.length + pending.length
 
@@ -113,14 +120,13 @@ export default function WritePage() {
       showToast('Please fill in all three sections')
       return
     }
-    const today = new Date().toISOString().slice(0, 10)
     setSaving(true)
     try {
       let entryId = id
       if (!id) {
         try {
           const res = await client.post<EntryResponse>('/entries', {
-            date: today,
+            date: initialDate,
             day_text: dayText,
             thought_text: thoughtText,
             tomorrow_text: tomorrowText,

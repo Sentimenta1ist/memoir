@@ -11,6 +11,7 @@ python-jose[cryptography]
 python-multipart
 email-validator
 Pillow>=10.3.0
+slowapi
 pytest
 pytest-asyncio
 httpx

@@ -4,7 +4,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.database import Base, get_db
-from app.main import app
+from app.main import app, limiter
 
 
 @pytest_asyncio.fixture
@@ -30,8 +30,10 @@ async def client(db_session):
 
     app.dependency_overrides[get_db] = override_get_db
 
+    limiter.enabled = False
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
+    limiter.enabled = True
 
     app.dependency_overrides.clear()
 

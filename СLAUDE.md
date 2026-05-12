@@ -1,6 +1,10 @@
 ## Project
 Personal evening journal app. React + FastAPI + PostgreSQL. Deployed on Coolify at memoir.qear.net.
 
+## Git rules
+- Never `git push` unless explicitly asked
+- Commits are fine, but push only on request
+
 ## Critical rules
 - All DateTime columns are `timezone=False`. Always use `datetime.utcnow()`, NEVER `datetime.now(timezone.utc)` — asyncpg rejects aware datetimes
 - `updated_at` is set manually in service layer, not via SQLAlchemy `onupdate`

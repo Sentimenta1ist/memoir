@@ -48,13 +48,13 @@ export default function ImageFlow({ images, dayText, apiBase, entryId, onImagesC
   }, [apiBase])
 
   const handleReplace = async (i: number, file: File) => {
+    if (!entryId) return
     const userImg = images[i]
-    if (!userImg || !entryId) return
     try {
       const form = new FormData()
       form.append('file', file)
       await client.post(`/entries/${entryId}/images`, form)
-      await client.delete(`/entries/${entryId}/images/${userImg.id}`)
+      if (userImg) await client.delete(`/entries/${entryId}/images/${userImg.id}`)
       onImagesChange?.()
     } catch { /* graceful degradation */ }
   }
@@ -87,7 +87,7 @@ export default function ImageFlow({ images, dayText, apiBase, entryId, onImagesC
           <span key={i}>
             {src && (
               <div
-                className={hasImage ? 'img-replace-wrap' : undefined}
+                className="img-replace-wrap"
                 style={{
                   float: slot.side,
                   width: slot.size,
@@ -97,7 +97,7 @@ export default function ImageFlow({ images, dayText, apiBase, entryId, onImagesC
                   margin,
                   position: 'relative',
                 }}
-                onClick={hasImage ? () => fileRefs.current[i]?.click() : undefined}
+                onClick={() => entryId && fileRefs.current[i]?.click()}
               >
                 <img
                   src={src}
@@ -111,24 +111,20 @@ export default function ImageFlow({ images, dayText, apiBase, entryId, onImagesC
                     opacity: hasImage ? 1 : 0.45,
                   }}
                 />
-                {hasImage && (
-                  <>
-                    <div className="img-replace-overlay">
-                      <PencilIcon />
-                    </div>
-                    <input
-                      ref={(el) => { fileRefs.current[i] = el }}
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleReplace(i, file)
-                        e.target.value = ''
-                      }}
-                    />
-                  </>
-                )}
+                <div className="img-replace-overlay">
+                  <PencilIcon />
+                </div>
+                <input
+                  ref={(el) => { fileRefs.current[i] = el }}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleReplace(i, file)
+                    e.target.value = ''
+                  }}
+                />
               </div>
             )}
             {groups[i + 1]?.length > 0 && <p>{groups[i + 1].join(' ')}</p>}

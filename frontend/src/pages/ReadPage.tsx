@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import client from '../api/client'
 import { useToastStore } from '../store/toastStore'
+import { useAutoResizeTextarea } from '../hooks/useAutoResizeTextarea'
 import ImageFlow from '../components/ImageFlow'
 import type { EntryResponse } from '../types'
 
@@ -15,11 +16,6 @@ function formatDate(dateStr: string) {
     day: 'numeric',
     year: 'numeric',
   })
-}
-
-function autoResize(el: HTMLTextAreaElement) {
-  el.style.height = 'auto'
-  el.style.height = el.scrollHeight + 'px'
 }
 
 const FIELD_MAP = {
@@ -54,6 +50,7 @@ export default function ReadPage() {
   const [savedIndicator, setSavedIndicator] = useState<Block | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const autoResize = useAutoResizeTextarea()
 
   const { data: entry, isLoading } = useQuery<EntryResponse>({
     queryKey: ['entry', id],
@@ -194,7 +191,7 @@ export default function ReadPage() {
           renderBlock(
             'day',
             <>
-              <div className="read-section-label">Day</div>
+              <div className="read-section-label">Лог дня</div>
               <ImageFlow
                 images={entry.images}
                 dayText={entry.day_text}
@@ -209,7 +206,7 @@ export default function ReadPage() {
           renderBlock(
             'mind',
             <>
-              <div className="read-section-label">Mind</div>
+              <div className="read-section-label">Дела</div>
               <div className="thought-card">
                 <span className="thought-quote">"</span>
                 <p className="thought-text">{entry.thought_text}</p>
@@ -221,7 +218,7 @@ export default function ReadPage() {
           renderBlock(
             'tomorrow',
             <>
-              <div className="read-section-label">Tomorrow</div>
+              <div className="read-section-label">Мысли</div>
               <div className="tomorrow-card">
                 <p className="tomorrow-text">{entry.tomorrow_text}</p>
                 <span className="tomorrow-mark">→</span>

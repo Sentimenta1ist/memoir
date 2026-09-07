@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import client, { imgUrl } from '../api/client'
 import { useToastStore } from '../store/toastStore'
+import { useAutoResizeTextarea } from '../hooks/useAutoResizeTextarea'
 import type { EntryResponse, ImageResponse } from '../types'
 
 function formatDate(dateStr: string) {
@@ -12,11 +13,6 @@ function formatDate(dateStr: string) {
     day: 'numeric',
     year: 'numeric',
   })
-}
-
-function autoResize(el: HTMLTextAreaElement) {
-  el.style.height = 'auto'
-  el.style.height = el.scrollHeight + 'px'
 }
 
 interface PendingFile {
@@ -48,6 +44,7 @@ export default function WritePage() {
   const tomorrowRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const blobUrlsRef = useRef<string[]>([])
+  const autoResize = useAutoResizeTextarea()
 
   useEffect(() => {
     return () => {
@@ -187,14 +184,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">01</span>
-            <span className="block-title">DAY</span>
+            <span className="block-title">ЛОГ ДНЯ</span>
           </div>
-          <p className="block-hint">What happened today — 3–4 sentences. Just so the day stays.</p>
+          <p className="block-hint">Что было сегодня — пиши сколько нужно.</p>
           <div className="block-divider" />
           <textarea
             ref={dayRef}
             className="block-textarea"
-            placeholder="Tell the day…"
+            placeholder="Расскажи, как прошёл день…"
             value={dayText}
             onChange={(e) => {
               setDayText(e.target.value)
@@ -206,14 +203,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">02</span>
-            <span className="block-title">MIND</span>
+            <span className="block-title">ДЕЛА</span>
           </div>
-          <p className="block-hint">What I thought / read / watched — one idea worth keeping.</p>
+          <p className="block-hint">Открытые задачи и петли, которые пока не закрыты.</p>
           <div className="block-divider" />
           <textarea
             ref={thoughtRef}
             className="block-textarea"
-            placeholder="One idea…"
+            placeholder="Что осталось незакрытым…"
             value={thoughtText}
             onChange={(e) => {
               setThoughtText(e.target.value)
@@ -225,14 +222,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">03</span>
-            <span className="block-title">TOMORROW</span>
+            <span className="block-title">МЫСЛИ</span>
           </div>
-          <p className="block-hint">Tomorrow — one thing. One specific action. Not a list.</p>
+          <p className="block-hint">Планы, идеи, наблюдения и всякие мелочи — в свободной форме.</p>
           <div className="block-divider" />
           <textarea
             ref={tomorrowRef}
             className="block-textarea"
-            placeholder="One action…"
+            placeholder="Мысль, идея, мелочь…"
             value={tomorrowText}
             onChange={(e) => {
               setTomorrowText(e.target.value)

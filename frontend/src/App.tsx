@@ -8,7 +8,6 @@ import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import WritePage from './pages/WritePage'
 import ReadPage from './pages/ReadPage'
-import CalendarPage from './pages/CalendarPage'
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -41,14 +40,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <ReadPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/calendar',
-    element: (
-      <ProtectedRoute>
-        <CalendarPage />
       </ProtectedRoute>
     ),
   },

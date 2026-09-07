@@ -130,14 +130,21 @@ memoir/
         │
         ├── pages/
         │   ├── LoginPage.tsx            email/password form; login → /auth/me → navigate /
-        │   ├── HomePage.tsx             streak card, today pill, entry list, FAB
+        │   ├── HomePage.tsx             embedded calendar + streak, today pill, entry list, FAB
         │   ├── WritePage.tsx            new/edit entry; image add/remove; deferred uploads on save
         │   └── ReadPage.tsx             read-only view; ImageFlow for day text; delete confirmation
         │
-        └── components/
-            ├── ProtectedRoute.tsx       redirects to /login if no accessToken in store
-            ├── ImageFlow.tsx            CSS shape-outside float layout; 5-shape cycle
-            └── Toast.tsx               renders .toast div; show class driven by toastStore
+        ├── components/
+        │   ├── ProtectedRoute.tsx       redirects to /login if no accessToken in store
+        │   ├── EntryCalendar.tsx        month grid + streak header; embedded on HomePage (no separate route)
+        │   ├── ImageFlow.tsx            CSS shape-outside float layout; 5-shape cycle
+        │   └── Toast.tsx               renders .toast div; show class driven by toastStore
+        │
+        ├── hooks/
+        │   └── useAutoResizeTextarea.ts  textarea auto-grow; no-ops when CSS field-sizing is supported
+        │
+        └── utils/
+            └── entryDateMap.ts          builds a date → entry id Map from the entries list, for the calendar
 ```
 
 ---
@@ -445,7 +452,7 @@ include_router: health, auth, entries, images
 
 #### `HomePage.tsx`
 
-- **Renders:** header with logo + "•••" info button; streak card (number + 7-dot row); today pill (green "saved ✓" or purple pulsing "no entry yet"); entries section header; entry cards list; FAB "+"
+- **Renders:** header with logo + "•••" info button; embedded month calendar with streak number in its header (`EntryCalendar`, replaces the old standalone `/calendar` route and streak hero card); today pill (green "saved ✓" or accent-teal pulsing "+ write today"); entries section header; entry cards list; FAB "+"
 - **API calls:** `GET /entries?page=1&limit=50` via TanStack Query (staleTime 60 s)
 - **Derived state:** `todayEntry` = item matching today's date string; `streak` from response
 - **FAB behavior:** if `todayEntry` exists → navigate to `/write/:id` (edit); otherwise → `/write` (new)
@@ -581,28 +588,31 @@ Actions: `setTokens(access, refresh)` — sets both store and localStorage; `set
 
 | Variable | Value | Usage |
 |----------|-------|-------|
-| `--bg` | `#09090f` | Page/body background |
-| `--b1` | `#111119` | Card / streak card background |
-| `--b2` | `#18181f` | Input background, hover background |
-| `--b3` | `#25252f` | Borders, muted backgrounds |
-| `--tx` | `#ede8ff` | Primary text |
-| `--t2` | `#9a88c8` | Secondary text |
-| `--t3` | `#58506a` | Muted text, placeholders |
-| `--va` | `#8b5cf6` | Primary accent (violet) |
-| `--vb` | `#a78bfa` | Lighter accent |
-| `--vc` | `#c4b5fd` | Lightest accent (block badge) |
-| `--ga` | `#7c3aed` | Gradient start |
-| `--gb` | `#a855f7` | Gradient mid |
-| `--gc` | `#e879f9` | Gradient end |
-| `--g` | `linear-gradient(135deg, var(--ga), var(--gc))` | Primary gradient (logo, FAB, tomorrow card, buttons) |
-| `--g2` | `linear-gradient(135deg, #4f46e5, var(--ga))` | Secondary gradient (unused in current pages) |
+| `--bg` | `#07090f` | Page/body background |
+| `--b1` | `#0d1117` | Card / calendar card background |
+| `--b2` | `#131920` | Input background, hover background |
+| `--b3` | `#1c2530` | Borders, muted backgrounds |
+| `--tx` | `#eaecf2` | Primary text |
+| `--t2` | `#7a869c` | Secondary text |
+| `--t3` | `#4b5468` | Muted text, placeholders |
+| `--va` | `#545f8f` | Muted indigo/slate accent — decorative borders, badges, focus states |
+| `--vb` | `#6b76a8` | Lighter muted accent |
+| `--vc` | `#8990c2` | Lightest muted accent (block badge text) |
+| `--acc` | `#2bd9b0` | The one neon accent, reserved for functional "live" signals only: streak number, week/calendar entry dots, pulse-dot, save confirmation |
+| `--ga` | `#3c4470` | Primary gradient start (muted indigo) |
+| `--gb` | `#565f96` | Primary gradient mid (currently unused directly) |
+| `--gc` | `#6b74ac` | Primary gradient end (muted slate-blue) |
+| `--g` | `linear-gradient(135deg, var(--ga), var(--gc))` | Primary gradient (logo, FAB, buttons, section divider) |
+| `--gw` | `linear-gradient(135deg, #6b4a45, #453a5e)` | Secondary gradient — tomorrow/notes card only (muted terracotta → plum) |
 | `--safe-top` | `env(safe-area-inset-top, 0px)` | iOS notch padding |
 | `--safe-bottom` | `env(safe-area-inset-bottom, 0px)` | iOS home indicator padding |
 
+Note: the accent used to be teal/indigo (`--va: #00c9b1`, `--g: #00c9b1 → #6366f1`) before this pass, and *never* matched the violet/pink values previously documented here — that was stale documentation, not a real historical palette. The current palette intentionally moves away from a single loud gradient smeared across many elements, toward a muted indigo/slate base with `--acc` reserved for a handful of functional indicators.
+
 **Fonts (Google Fonts CDN):**
-- `Unbounded` (wght 400/600/700) — headings, logo, dates, badges
-- `Outfit` (wght 300/400/500/600) — body text, inputs, buttons
-- `Caveat` (wght 500/600) — decorative quote mark, tomorrow arrow
+- `Unbounded` (wght 400/600/700) — headings, logo, dates, badges. Confirmed to carry real Cyrillic glyphs (including Ё/Й) via Google's own served `unicode-range`.
+- `Golos Text` (wght 400/500/600) — body text, inputs, buttons, textareas. Replaces `Outfit`, which has **no Cyrillic glyphs in any weight** (confirmed via Google Fonts CSS2 response — only latin/latin-ext/vietnamese ranges are ever served for it), causing Cyrillic characters to silently fall back to the system sans-serif mid-sentence. Golos Text was designed by VK specifically for Cyrillic/Latin visual harmony in product UI.
+- `Caveat` (wght 500/600) — decorative quote mark, tomorrow/notes card mark. Has real Cyrillic glyphs.
 
 ---
 

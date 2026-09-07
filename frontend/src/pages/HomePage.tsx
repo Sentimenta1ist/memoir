@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import client, { imgUrl } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+import EntryCalendar from '../components/EntryCalendar'
+import { buildEntryDateMap } from '../utils/entryDateMap'
 import type { EntryListResponse, EntryResponse } from '../types'
 
 function formatDate(dateStr: string) {
@@ -54,13 +56,14 @@ export default function HomePage() {
   const { data, isLoading } = useQuery<EntryListResponse>({
     queryKey: ['entries'],
     queryFn: () =>
-      client.get<EntryListResponse>('/entries?page=1&limit=50').then((r) => r.data),
+      client.get<EntryListResponse>('/entries?page=1&limit=500').then((r) => r.data),
     staleTime: 1000 * 60,
   })
 
   const today = new Date().toISOString().slice(0, 10)
   const todayEntry = data?.items.find((e) => e.date === today)
   const streak = data?.streak ?? 0
+  const entryMap = useMemo(() => buildEntryDateMap(data?.items ?? []), [data])
 
   const handleLogout = () => {
     clear()
@@ -71,31 +74,12 @@ export default function HomePage() {
     <div className="page">
       <div className="header">
         <span className="logo">MEMOIR</span>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button className="icon-btn" onClick={() => navigate('/calendar')} aria-label="Calendar">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="3" width="16" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M1 7h16" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M5 1v4M13 1v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-          <button className="icon-btn" onClick={() => setInfoOpen(true)} aria-label="Info">
-            •••
-          </button>
-        </div>
+        <button className="icon-btn" onClick={() => setInfoOpen(true)} aria-label="Info">
+          •••
+        </button>
       </div>
 
-      <div className="sc">
-        <div className="sc-left">
-          <div className="sn">{streak}</div>
-          <div className="sc-label">day streak</div>
-        </div>
-        <div className="sc-dots">
-          {Array.from({ length: 7 }, (_, i) => (
-            <span key={i} className={`dot${i < Math.min(streak, 7) ? ' dot-on' : ''}`} />
-          ))}
-        </div>
-      </div>
+      <EntryCalendar entryMap={entryMap} streak={streak} />
 
       <div className="today-pill-row">
         {todayEntry ? (

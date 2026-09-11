@@ -14,22 +14,21 @@ vi.mock('@tanstack/react-query', () => ({
 }))
 
 describe('WritePage', () => {
-  it('renders the new block labels and hints instead of DAY/MIND/TOMORROW', () => {
+  it('renders English block labels, hints, and placeholders', () => {
     render(<WritePage />)
 
-    expect(screen.getByText('ЛОГ ДНЯ')).toBeTruthy()
-    expect(screen.getByText('ДЕЛА')).toBeTruthy()
-    expect(screen.getByText('МЫСЛИ')).toBeTruthy()
+    expect(screen.getByText('DAY')).toBeTruthy()
+    expect(screen.getByText('TASKS')).toBeTruthy()
+    expect(screen.getByText('THOUGHTS')).toBeTruthy()
 
-    expect(screen.queryByText('DAY')).toBeNull()
-    expect(screen.queryByText('MIND')).toBeNull()
-    expect(screen.queryByText('TOMORROW')).toBeNull()
+    expect(screen.queryByText('ЛОГ ДНЯ')).toBeNull()
+    expect(screen.queryByText('ДЕЛА')).toBeNull()
+    expect(screen.queryByText('МЫСЛИ')).toBeNull()
 
-    expect(screen.getByText(/Что было сегодня/)).toBeTruthy()
-    expect(screen.queryByText(/3–4 sentences/)).toBeNull()
+    expect(screen.getByText(/What happened today/)).toBeTruthy()
 
-    expect(screen.getByPlaceholderText('Расскажи, как прошёл день…')).toBeTruthy()
-    expect(screen.getByPlaceholderText('Что осталось незакрытым…')).toBeTruthy()
-    expect(screen.getByPlaceholderText('Мысль, идея, мелочь…')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Tell me how the day went…')).toBeTruthy()
+    expect(screen.getByPlaceholderText("What's left unfinished…")).toBeTruthy()
+    expect(screen.getByPlaceholderText('A thought, an idea, something small…')).toBeTruthy()
   })
 })

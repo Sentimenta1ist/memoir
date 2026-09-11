@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import client from '../api/client'
 import { useToastStore } from '../store/toastStore'
@@ -23,6 +23,8 @@ const FIELD_MAP = {
   mind: 'thought_text',
   tomorrow: 'tomorrow_text',
 } as const
+
+const READ_MORE_THRESHOLD = 220
 
 type Block = keyof typeof FIELD_MAP
 
@@ -191,7 +193,7 @@ export default function ReadPage() {
           renderBlock(
             'day',
             <>
-              <div className="read-section-label">Лог дня</div>
+              <div className="read-section-label">Day</div>
               <ImageFlow
                 images={entry.images}
                 dayText={entry.day_text}
@@ -206,9 +208,8 @@ export default function ReadPage() {
           renderBlock(
             'mind',
             <>
-              <div className="read-section-label">Дела</div>
+              <div className="read-section-label">Tasks</div>
               <div className="thought-card">
-                <span className="thought-quote">"</span>
                 <p className="thought-text">{entry.thought_text}</p>
               </div>
             </>
@@ -218,10 +219,14 @@ export default function ReadPage() {
           renderBlock(
             'tomorrow',
             <>
-              <div className="read-section-label">Мысли</div>
+              <div className="read-section-label">Thoughts</div>
               <div className="tomorrow-card">
                 <p className="tomorrow-text">{entry.tomorrow_text}</p>
-                <span className="tomorrow-mark">→</span>
+                {entry.tomorrow_text.length > READ_MORE_THRESHOLD && (
+                  <Link className="read-more-link" to={`/entry/${id}`}>
+                    Read more
+                  </Link>
+                )}
               </div>
             </>
           )}

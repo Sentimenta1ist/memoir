@@ -184,14 +184,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">01</span>
-            <span className="block-title">ЛОГ ДНЯ</span>
+            <span className="block-title">DAY</span>
           </div>
-          <p className="block-hint">Что было сегодня — пиши сколько нужно.</p>
+          <p className="block-hint">What happened today — write as much as you need.</p>
           <div className="block-divider" />
           <textarea
             ref={dayRef}
             className="block-textarea"
-            placeholder="Расскажи, как прошёл день…"
+            placeholder="Tell me how the day went…"
             value={dayText}
             onChange={(e) => {
               setDayText(e.target.value)
@@ -203,14 +203,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">02</span>
-            <span className="block-title">ДЕЛА</span>
+            <span className="block-title">TASKS</span>
           </div>
-          <p className="block-hint">Открытые задачи и петли, которые пока не закрыты.</p>
+          <p className="block-hint">Open tasks and loose ends that aren't closed yet.</p>
           <div className="block-divider" />
           <textarea
             ref={thoughtRef}
             className="block-textarea"
-            placeholder="Что осталось незакрытым…"
+            placeholder="What's left unfinished…"
             value={thoughtText}
             onChange={(e) => {
               setThoughtText(e.target.value)
@@ -222,14 +222,14 @@ export default function WritePage() {
         <div className="write-block">
           <div className="block-top">
             <span className="block-badge">03</span>
-            <span className="block-title">МЫСЛИ</span>
+            <span className="block-title">THOUGHTS</span>
           </div>
-          <p className="block-hint">Планы, идеи, наблюдения и всякие мелочи — в свободной форме.</p>
+          <p className="block-hint">Plans, ideas, observations, and odds and ends — free form.</p>
           <div className="block-divider" />
           <textarea
             ref={tomorrowRef}
             className="block-textarea"
-            placeholder="Мысль, идея, мелочь…"
+            placeholder="A thought, an idea, something small…"
             value={tomorrowText}
             onChange={(e) => {
               setTomorrowText(e.target.value)

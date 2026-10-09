@@ -1,22 +1,28 @@
+import datetime as dt
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, BeforeValidator, Field
 
 NonEmptyStr = Annotated[str, Field(min_length=1)]
+# Blank strings are stored as NULL so optional sections stay truly empty
+OptionalText = Annotated[
+    str | None, BeforeValidator(lambda v: None if isinstance(v, str) and not v.strip() else v)
+]
 
 
 class EntryCreate(BaseModel):
     date: date
     day_text: NonEmptyStr
-    thought_text: NonEmptyStr
-    tomorrow_text: NonEmptyStr
+    thought_text: OptionalText = None
+    tomorrow_text: OptionalText = None
 
 
 class EntryUpdate(BaseModel):
+    date: dt.date | None = None
     day_text: NonEmptyStr | None = None
-    thought_text: NonEmptyStr | None = None
-    tomorrow_text: NonEmptyStr | None = None
+    thought_text: OptionalText = None
+    tomorrow_text: OptionalText = None
 
 
 class ImageResponse(BaseModel):

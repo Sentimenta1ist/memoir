@@ -41,6 +41,15 @@ function PencilIcon() {
   )
 }
 
+function CalendarIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2.5" y="3.5" width="13" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.5 7.5h13M6 2v3M12 2v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export default function ReadPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -52,6 +61,7 @@ export default function ReadPage() {
   const [savedIndicator, setSavedIndicator] = useState<Block | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const dateInputRef = useRef<HTMLInputElement>(null)
   const autoResize = useAutoResizeTextarea()
 
   const { data: entry, isLoading } = useQuery<EntryResponse>({
@@ -84,6 +94,49 @@ export default function ReadPage() {
     },
   })
 
+  const dateMutation = useMutation({
+    mutationFn: (date: string) => client.put<EntryResponse>(`/entries/${id}`, { date }),
+    onSuccess: (res) => {
+      queryClient.setQueryData(['entry', id], res.data)
+      queryClient.invalidateQueries({ queryKey: ['entries'] })
+      showToast(`Moved to ${formatDate(res.data.date)}`)
+    },
+    onError: (err: unknown) => {
+      if (dateInputRef.current && entry) dateInputRef.current.value = entry.date
+      const e = err as { response?: { status?: number } }
+      showToast(
+        e.response?.status === 409
+          ? 'An entry for that date already exists'
+          : 'Failed to change date. Try again.'
+      )
+    },
+  })
+
+  const openDatePicker = () => {
+    const input = dateInputRef.current
+    if (!input) return
+    try {
+      input.showPicker()
+    } catch {
+      input.focus()
+      input.click()
+    }
+  }
+
+  // Native 'change' instead of React onChange: iOS fires input events on every
+  // wheel turn, but 'change' only once the picker is dismissed
+  const { mutate: changeDate } = dateMutation
+  useEffect(() => {
+    const input = dateInputRef.current
+    if (!input || !entry) return
+    input.value = entry.date
+    const onChange = () => {
+      if (input.value && input.value !== entry.date) changeDate(input.value)
+    }
+    input.addEventListener('change', onChange)
+    return () => input.removeEventListener('change', onChange)
+  }, [entry, changeDate])
+
   const getOriginal = (block: Block) => {
     if (!entry) return ''
     if (block === 'day') return entry.day_text ?? ''
@@ -104,6 +157,10 @@ export default function ReadPage() {
 
   const handleSave = () => {
     if (!editingBlock) return
+    if (editingBlock === 'day' && !draftValue.trim()) {
+      setEditError("Day can't be empty.")
+      return
+    }
     mutation.mutate({ block: editingBlock, value: draftValue })
   }
 
@@ -183,9 +240,27 @@ export default function ReadPage() {
           ←
         </button>
         <span className="read-date">{formatDate(entry.date)}</span>
-        <button className="icon-btn" onClick={handleDelete} aria-label="Delete">
-          🗑
-        </button>
+        <div className="read-header-actions">
+          <button
+            className="icon-btn"
+            onClick={openDatePicker}
+            disabled={dateMutation.isPending}
+            aria-label="Change date"
+          >
+            <CalendarIcon />
+          </button>
+          <input
+            ref={dateInputRef}
+            type="date"
+            className="date-picker-input"
+            defaultValue={entry.date}
+            tabIndex={-1}
+            aria-hidden="true"
+          />
+          <button className="icon-btn" onClick={handleDelete} aria-label="Delete">
+            🗑
+          </button>
+        </div>
       </div>
 
       <div className="read-body">
@@ -204,22 +279,25 @@ export default function ReadPage() {
             </>
           )}
 
-        {entry.thought_text &&
-          renderBlock(
-            'mind',
-            <>
-              <div className="read-section-label">Tasks</div>
+        {renderBlock(
+          'mind',
+          <>
+            <div className="read-section-label">Tasks</div>
+            {entry.thought_text ? (
               <div className="thought-card">
                 <p className="thought-text">{entry.thought_text}</p>
               </div>
-            </>
-          )}
+            ) : (
+              <p className="read-section-empty">No tasks — tap the pencil to add.</p>
+            )}
+          </>
+        )}
 
-        {entry.tomorrow_text &&
-          renderBlock(
-            'tomorrow',
-            <>
-              <div className="read-section-label">Thoughts</div>
+        {renderBlock(
+          'tomorrow',
+          <>
+            <div className="read-section-label">Thoughts</div>
+            {entry.tomorrow_text ? (
               <div className="tomorrow-card">
                 <p className="tomorrow-text">{entry.tomorrow_text}</p>
                 {entry.tomorrow_text.length > READ_MORE_THRESHOLD && (
@@ -228,8 +306,11 @@ export default function ReadPage() {
                   </Link>
                 )}
               </div>
-            </>
-          )}
+            ) : (
+              <p className="read-section-empty">No thoughts — tap the pencil to add.</p>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

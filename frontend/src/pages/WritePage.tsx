@@ -113,8 +113,8 @@ export default function WritePage() {
   }
 
   const handleSave = async () => {
-    if (!dayText.trim() || !thoughtText.trim() || !tomorrowText.trim()) {
-      showToast('Please fill in all three sections')
+    if (!dayText.trim()) {
+      showToast('Please fill in the Day section')
       return
     }
     setSaving(true)
@@ -204,6 +204,7 @@ export default function WritePage() {
           <div className="block-top">
             <span className="block-badge">02</span>
             <span className="block-title">TASKS</span>
+            <span className="block-optional">optional</span>
           </div>
           <p className="block-hint">Open tasks and loose ends that aren't closed yet.</p>
           <div className="block-divider" />
@@ -223,6 +224,7 @@ export default function WritePage() {
           <div className="block-top">
             <span className="block-badge">03</span>
             <span className="block-title">THOUGHTS</span>
+            <span className="block-optional">optional</span>
           </div>
           <p className="block-hint">Plans, ideas, observations, and odds and ends — free form.</p>
           <div className="block-divider" />

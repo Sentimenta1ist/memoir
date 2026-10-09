@@ -141,3 +141,77 @@ async def test_today_entry_missing(client, auth_headers):
     resp = await client.get("/entries/today", headers=auth_headers)
     assert resp.status_code == 200
     assert resp.json() is None
+
+
+@pytest.mark.asyncio
+async def test_create_entry_without_optional_sections(client, auth_headers):
+    resp = await client.post("/entries", headers=auth_headers, json={
+        "date": OTHER_DATE,
+        "day_text": "Only the day",
+        "thought_text": "   ",
+    })
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["day_text"] == "Only the day"
+    assert data["thought_text"] is None
+    assert data["tomorrow_text"] is None
+
+
+@pytest.mark.asyncio
+async def test_create_entry_requires_day_text(client, auth_headers):
+    resp = await client.post("/entries", headers=auth_headers, json={
+        "date": OTHER_DATE,
+        "day_text": "",
+        "thought_text": "Thought",
+    })
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_clears_optional_section(client, auth_headers):
+    create_resp = await client.post("/entries", headers=auth_headers, json={
+        "date": OTHER_DATE,
+        "day_text": "Day",
+        "thought_text": "Thought",
+        "tomorrow_text": "Tomorrow",
+    })
+    entry_id = create_resp.json()["id"]
+
+    resp = await client.put(f"/entries/{entry_id}", headers=auth_headers, json={"thought_text": ""})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["thought_text"] is None
+    assert data["tomorrow_text"] == "Tomorrow"
+    assert data["day_text"] == "Day"
+
+
+@pytest.mark.asyncio
+async def test_update_entry_date(client, auth_headers):
+    create_resp = await client.post("/entries", headers=auth_headers, json={
+        "date": OTHER_DATE,
+        "day_text": "Day",
+    })
+    entry_id = create_resp.json()["id"]
+
+    resp = await client.put(f"/entries/{entry_id}", headers=auth_headers, json={"date": "2026-01-10"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["date"] == "2026-01-10"
+    assert data["day_text"] == "Day"
+
+    resp = await client.get(f"/entries/{entry_id}", headers=auth_headers)
+    assert resp.json()["date"] == "2026-01-10"
+
+
+@pytest.mark.asyncio
+async def test_update_entry_date_conflict(client, auth_headers):
+    await client.post("/entries", headers=auth_headers, json={"date": "2026-01-10", "day_text": "First"})
+    second = await client.post("/entries", headers=auth_headers, json={"date": OTHER_DATE, "day_text": "Second"})
+    entry_id = second.json()["id"]
+
+    resp = await client.put(f"/entries/{entry_id}", headers=auth_headers, json={"date": "2026-01-10"})
+    assert resp.status_code == 409
+
+    resp = await client.get(f"/entries/{entry_id}", headers=auth_headers)
+    assert resp.status_code == 200
+    assert resp.json()["date"] == OTHER_DATE

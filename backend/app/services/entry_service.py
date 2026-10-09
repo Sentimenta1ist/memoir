@@ -81,7 +81,11 @@ async def create_entry(db: AsyncSession, user_id: str, data: EntryCreate) -> Ent
 
 
 async def update_entry(db: AsyncSession, entry: Entry, data: EntryUpdate) -> Entry:
-    for key, value in data.model_dump(exclude_none=True).items():
+    # exclude_unset so optional sections can be cleared with an explicit null;
+    # date and day_text are required columns and are never nulled
+    for key, value in data.model_dump(exclude_unset=True).items():
+        if value is None and key in ("date", "day_text"):
+            continue
         setattr(entry, key, value)
     entry.updated_at = datetime.utcnow()
     await db.flush()

@@ -67,8 +67,12 @@ async def update_entry(
     entry = await entry_service.get_entry_by_id(db, entry_id, current_user.id)
     if entry is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
-    entry = await entry_service.update_entry(db, entry, body)
-    await db.commit()
+    try:
+        entry = await entry_service.update_entry(db, entry, body)
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Entry for this date already exists")
     return entry
 
 

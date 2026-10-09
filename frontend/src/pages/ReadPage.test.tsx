@@ -38,6 +38,7 @@ beforeEach(() => {
 
 describe('ReadPage', () => {
   afterEach(() => {
+    mockEntry.thought_text = 'Дописать отчёт клиенту.'
     mockEntry.tomorrow_text = 'Позвонить в 10:00.'
   })
 
@@ -71,5 +72,25 @@ describe('ReadPage', () => {
     const link = screen.getByText('Read more')
     expect(link).toBeTruthy()
     expect(link.getAttribute('href')).toBe('/entry/entry-1')
+  })
+
+  it('shows editable placeholders when optional sections are empty', () => {
+    mockEntry.thought_text = null
+    mockEntry.tomorrow_text = null
+    render(<ReadPage />)
+    expect(screen.getByText('Tasks')).toBeTruthy()
+    expect(screen.getByText('Thoughts')).toBeTruthy()
+    expect(screen.getByText(/No tasks/)).toBeTruthy()
+    expect(screen.getByText(/No thoughts/)).toBeTruthy()
+    expect(screen.getByLabelText('Edit mind')).toBeTruthy()
+    expect(screen.getByLabelText('Edit tomorrow')).toBeTruthy()
+  })
+
+  it('renders a change-date control next to delete, prefilled with the entry date', () => {
+    const { container } = render(<ReadPage />)
+    expect(screen.getByLabelText('Change date')).toBeTruthy()
+    expect(screen.getByLabelText('Delete')).toBeTruthy()
+    const input = container.querySelector('input[type="date"]') as HTMLInputElement
+    expect(input.value).toBe('2026-09-01')
   })
 })

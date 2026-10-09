@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ReadPage from './ReadPage'
 import type { EntryResponse } from '../types'
@@ -26,10 +26,21 @@ const mockEntry: EntryResponse = {
   images: [],
 }
 
+const { mutate } = vi.hoisted(() => ({ mutate: vi.fn() }))
+
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: () => ({ data: mockEntry, isLoading: false }),
+  useQuery: ({ queryKey }: { queryKey: string[] }) =>
+    queryKey[0] === 'entries'
+      ? {
+          data: {
+            items: [mockEntry, { ...mockEntry, id: 'entry-2', date: '2026-09-03' }],
+            total: 2,
+            streak: 0,
+          },
+        }
+      : { data: mockEntry, isLoading: false },
   useQueryClient: () => ({ invalidateQueries: vi.fn(), removeQueries: vi.fn() }),
-  useMutation: () => ({ mutate: vi.fn(), isPending: false }),
+  useMutation: () => ({ mutate, isPending: false }),
 }))
 
 beforeEach(() => {
@@ -86,11 +97,40 @@ describe('ReadPage', () => {
     expect(screen.getByLabelText('Edit tomorrow')).toBeTruthy()
   })
 
-  it('renders a change-date control next to delete, prefilled with the entry date', () => {
-    const { container } = render(<ReadPage />)
-    expect(screen.getByLabelText('Change date')).toBeTruthy()
+  it('opens the in-app date picker next to delete and moves the entry', () => {
+    mutate.mockClear()
+    render(<ReadPage />)
     expect(screen.getByLabelText('Delete')).toBeTruthy()
-    const input = container.querySelector('input[type="date"]') as HTMLInputElement
-    expect(input.value).toBe('2026-09-01')
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    fireEvent.click(screen.getByLabelText('Change date'))
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByText('SEPTEMBER 2026')).toBeTruthy()
+
+    const current = screen.getByLabelText('September 1, 2026') as HTMLButtonElement
+    const taken = screen.getByLabelText('September 3, 2026') as HTMLButtonElement
+    const free = screen.getByLabelText('September 10, 2026') as HTMLButtonElement
+    expect(current.disabled).toBe(true)
+    expect(taken.disabled).toBe(true)
+    expect(free.disabled).toBe(false)
+
+    const confirm = screen.getByText('Pick a new date') as HTMLButtonElement
+    expect(confirm.disabled).toBe(true)
+    fireEvent.click(free)
+    fireEvent.click(screen.getByText('Move to Thu, Sep 10'))
+    expect(mutate).toHaveBeenCalledWith('2026-09-10')
+  })
+
+  it('closes the date picker on backdrop click and Escape', () => {
+    mutate.mockClear()
+    render(<ReadPage />)
+    fireEvent.click(screen.getByLabelText('Change date'))
+    fireEvent.click(document.querySelector('.sheet-overlay')!)
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    fireEvent.click(screen.getByLabelText('Change date'))
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(mutate).not.toHaveBeenCalled()
   })
 })

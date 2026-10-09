@@ -579,31 +579,6 @@ body {
   gap: 2px;
   position: relative;
 }
-.date-picker-btn {
-  position: relative;
-  overflow: hidden;
-}
-/* Invisible native date input covering the icon: the tap lands on it directly */
-.date-picker-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: pointer;
-  font-size: 16px; /* below 16px iOS zooms the page on focus */
-}
-.date-picker-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  inset: 0;
-  width: auto;
-  height: auto;
-  cursor: pointer;
-}
 .read-section-empty {
   font-size: 14px;
   color: var(--t3);
@@ -784,6 +759,133 @@ body {
   text-align: center;
   padding: 4px 0 8px;
   font-weight: 500;
+}
+
+/* === Bottom sheet (date picker) === */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(3, 4, 8, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: sheet-fade 0.2s ease-out;
+}
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--b1);
+  border: 1px solid var(--b3);
+  border-bottom: none;
+  border-radius: 26px 26px 0 0;
+  padding: 10px 14px calc(18px + var(--safe-bottom));
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--b3);
+  margin: 0 auto 14px;
+}
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 4px 0 6px;
+  margin-bottom: 14px;
+}
+.sheet-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx);
+  letter-spacing: 0.02em;
+}
+.sheet-sub {
+  font-size: 13px;
+  color: var(--t2);
+  margin-top: 6px;
+}
+.sheet-nav {
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.sheet-grid {
+  padding: 0;
+  margin-bottom: 16px;
+}
+.sheet-cell {
+  background: none;
+  border: 1px solid transparent;
+  font: inherit;
+  min-height: 46px;
+  padding: 8px 4px 6px;
+  justify-content: flex-start;
+  border-radius: 12px;
+}
+.sheet-cell.cal-today {
+  border-color: var(--acc);
+}
+.sheet-cell:disabled {
+  cursor: default;
+}
+.sheet-cell:disabled:hover {
+  background: none;
+}
+.sheet-taken .cal-day-num {
+  color: var(--t3);
+}
+.sheet-taken .cal-dot {
+  width: 5px;
+  height: 5px;
+  background: var(--t3);
+}
+.sheet-current {
+  background: rgba(var(--acc-rgb), 0.1);
+}
+.sheet-current:disabled:hover {
+  background: rgba(var(--acc-rgb), 0.1);
+}
+.sheet-current .cal-day-num {
+  color: var(--acc);
+  font-weight: 600;
+}
+.sheet-current .cal-dot {
+  width: 5px;
+  height: 5px;
+}
+.sheet-selected,
+.sheet-selected:hover {
+  background: var(--g);
+  border-color: transparent;
+}
+.sheet-selected .cal-day-num {
+  color: #fff;
+  font-weight: 600;
+}
+.sheet-confirm {
+  margin-top: 4px;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* === Toast === */

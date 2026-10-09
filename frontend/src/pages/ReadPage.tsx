@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import client from '../api/client'
 import { useToastStore } from '../store/toastStore'
 import { useAutoResizeTextarea } from '../hooks/useAutoResizeTextarea'
 import ImageFlow from '../components/ImageFlow'
-import type { EntryResponse } from '../types'
+import DatePickerSheet from '../components/DatePickerSheet'
+import type { EntryListResponse, EntryResponse } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
@@ -61,7 +62,7 @@ export default function ReadPage() {
   const [savedIndicator, setSavedIndicator] = useState<Block | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const dateInputRef = useRef<HTMLInputElement>(null)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
   const autoResize = useAutoResizeTextarea()
 
   const { data: entry, isLoading } = useQuery<EntryResponse>({
@@ -70,6 +71,18 @@ export default function ReadPage() {
     enabled: !!id,
     staleTime: 1000 * 60,
   })
+
+  // Same query as HomePage, so the cache is shared; used to mark taken dates
+  const { data: entriesData } = useQuery<EntryListResponse>({
+    queryKey: ['entries'],
+    queryFn: () =>
+      client.get<EntryListResponse>('/entries?page=1&limit=500').then((r) => r.data),
+    staleTime: 1000 * 60,
+  })
+  const occupiedDates = useMemo(
+    () => new Set((entriesData?.items ?? []).map((e) => e.date)),
+    [entriesData]
+  )
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -99,10 +112,10 @@ export default function ReadPage() {
     onSuccess: (res) => {
       queryClient.setQueryData(['entry', id], res.data)
       queryClient.invalidateQueries({ queryKey: ['entries'] })
+      setDatePickerOpen(false)
       showToast(`Moved to ${formatDate(res.data.date)}`)
     },
     onError: (err: unknown) => {
-      if (dateInputRef.current && entry) dateInputRef.current.value = entry.date
       const e = err as { response?: { status?: number } }
       showToast(
         e.response?.status === 409
@@ -112,29 +125,7 @@ export default function ReadPage() {
     },
   })
 
-  // The transparent date input sits on top of the icon, so mobile browsers open
-  // their native picker from the tap itself; desktop Chrome needs showPicker()
-  const openDatePicker = (e: React.MouseEvent<HTMLInputElement>) => {
-    try {
-      e.currentTarget.showPicker()
-    } catch {
-      // Unsupported or already open — the native tap behavior still applies
-    }
-  }
-
-  // Native 'change' instead of React onChange: iOS fires input events on every
-  // wheel turn, but 'change' only once the picker is dismissed
-  const { mutate: changeDate } = dateMutation
-  useEffect(() => {
-    const input = dateInputRef.current
-    if (!input || !entry) return
-    input.value = entry.date
-    const onChange = () => {
-      if (input.value && input.value !== entry.date) changeDate(input.value)
-    }
-    input.addEventListener('change', onChange)
-    return () => input.removeEventListener('change', onChange)
-  }, [entry, changeDate])
+  const closeDatePicker = useCallback(() => setDatePickerOpen(false), [])
 
   const getOriginal = (block: Block) => {
     if (!entry) return ''
@@ -240,18 +231,13 @@ export default function ReadPage() {
         </button>
         <span className="read-date">{formatDate(entry.date)}</span>
         <div className="read-header-actions">
-          <span className="icon-btn date-picker-btn">
+          <button
+            className="icon-btn"
+            onClick={() => setDatePickerOpen(true)}
+            aria-label="Change date"
+          >
             <CalendarIcon />
-            <input
-              ref={dateInputRef}
-              type="date"
-              className="date-picker-input"
-              defaultValue={entry.date}
-              onClick={openDatePicker}
-              disabled={dateMutation.isPending}
-              aria-label="Change date"
-            />
-          </span>
+          </button>
           <button className="icon-btn" onClick={handleDelete} aria-label="Delete">
             🗑
           </button>
@@ -307,6 +293,16 @@ export default function ReadPage() {
           </>
         )}
       </div>
+
+      {datePickerOpen && (
+        <DatePickerSheet
+          currentDate={entry.date}
+          occupiedDates={occupiedDates}
+          pending={dateMutation.isPending}
+          onConfirm={(date) => dateMutation.mutate(date)}
+          onClose={closeDatePicker}
+        />
+      )}
     </div>
   )
 }

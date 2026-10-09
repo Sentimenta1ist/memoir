@@ -579,16 +579,30 @@ body {
   gap: 2px;
   position: relative;
 }
+.date-picker-btn {
+  position: relative;
+  overflow: hidden;
+}
+/* Invisible native date input covering the icon: the tap lands on it directly */
 .date-picker-input {
   position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-  border: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
   padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 16px; /* below 16px iOS zooms the page on focus */
+}
+.date-picker-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  cursor: pointer;
 }
 .read-section-empty {
   font-size: 14px;

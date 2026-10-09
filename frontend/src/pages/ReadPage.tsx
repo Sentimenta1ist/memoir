@@ -112,14 +112,13 @@ export default function ReadPage() {
     },
   })
 
-  const openDatePicker = () => {
-    const input = dateInputRef.current
-    if (!input) return
+  // The transparent date input sits on top of the icon, so mobile browsers open
+  // their native picker from the tap itself; desktop Chrome needs showPicker()
+  const openDatePicker = (e: React.MouseEvent<HTMLInputElement>) => {
     try {
-      input.showPicker()
+      e.currentTarget.showPicker()
     } catch {
-      input.focus()
-      input.click()
+      // Unsupported or already open — the native tap behavior still applies
     }
   }
 
@@ -241,22 +240,18 @@ export default function ReadPage() {
         </button>
         <span className="read-date">{formatDate(entry.date)}</span>
         <div className="read-header-actions">
-          <button
-            className="icon-btn"
-            onClick={openDatePicker}
-            disabled={dateMutation.isPending}
-            aria-label="Change date"
-          >
+          <span className="icon-btn date-picker-btn">
             <CalendarIcon />
-          </button>
-          <input
-            ref={dateInputRef}
-            type="date"
-            className="date-picker-input"
-            defaultValue={entry.date}
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+            <input
+              ref={dateInputRef}
+              type="date"
+              className="date-picker-input"
+              defaultValue={entry.date}
+              onClick={openDatePicker}
+              disabled={dateMutation.isPending}
+              aria-label="Change date"
+            />
+          </span>
           <button className="icon-btn" onClick={handleDelete} aria-label="Delete">
             🗑
           </button>

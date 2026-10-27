@@ -422,7 +422,6 @@ There is no separate `dependencies.py`. The `get_current_user` dependency lives 
 lifespan():
   os.makedirs(UPLOAD_DIR, exist_ok=True)
   await init_db()          # Base.metadata.create_all (also done by alembic)
-  await seed_default_user() # creates admin@memoir.app / ***REMOVED*** if absent
   yield
 
 app = FastAPI(title, debug, lifespan)
@@ -860,7 +859,6 @@ Migrations run on every container start before uvicorn. If migration fails, the 
 | Swagger UI exposed in production | Medium — reveals full API schema, enables easy fuzzing | Pass `docs_url=None, redoc_url=None` to `FastAPI()` in production, or gate behind auth | 15 min |
 | Refresh tokens not stored in DB | Medium — logout doesn't invalidate tokens; stolen refresh token valid for 30 days | Store refresh token hash in DB; delete on `/logout`; validate presence on `/refresh` | ~4 h |
 | No DB backups configured | High — single VPS, no point-in-time recovery | Enable Coolify scheduled backups or add `pg_dump` cron to S3 | 1 h |
-| Hardcoded seed user (`admin@memoir.app` / `***REMOVED***`) | High — ships a known credential in production | Remove `seed_default_user()` from lifespan; create user via migration or one-time script | 30 min |
 | `backend/.env` committed to git | Medium — leaks dev secrets; sets bad precedent | Add `.env` to `.gitignore`; rotate any reused secrets | 10 min |
 | `memoir.db` (SQLite file) committed | Low — leftover artifact, no prod secrets | Add `*.db` to `.gitignore`; delete from git history | 10 min |
 | Pillow/WebP not implemented | Low (functional) / Medium (storage) — README claims WebP compression but images are stored raw at original size | Add `Pillow` to `requirements.txt`; implement resize + WebP conversion in `image_service.save_image` | ~2 h |
@@ -971,7 +969,7 @@ class ReflectResponse(BaseModel):
 | # | File | Location | Severity | Description | Suggested fix |
 |---|------|----------|----------|-------------|---------------|
 | 1 | `image_service.py` | `save_image()` | **High** | Pillow/WebP conversion is not implemented. Files are saved with their original extension and raw bytes. `Pillow` is not in `requirements.txt`. All README/CLAUDE.md references to "WebP compression" are false. | Add `Pillow` to `requirements.txt`; open with `PIL.Image.open(io.BytesIO(data))`; resize to max 1200 px; `img.save(dest, "WEBP", quality=80)` |
-| 2 | `main.py` | `seed_default_user()` | **High** | Hardcoded credential `admin@memoir.app` / `***REMOVED***` is seeded on every boot if it doesn't exist. Anyone who knows this default can log in to any fresh deployment. | Remove the seed function entirely; create the initial user via a one-time migration or a `POST /auth/register` call at setup |
+| 2 | `main.py` | ~~`seed_default_user()`~~ | Fixed | Removed: no default user is seeded; accounts are created via `POST /auth/register`. | — |
 | 3 | `backend/.env` | repo root | **High** | The actual `.env` file (with `SECRET_KEY`) is committed to the git repository. | Add `backend/.env` to `.gitignore`; rotate any secrets that have been pushed remotely |
 | 4 | `config.py` | `SECRET_KEY` default | **Medium** | Default value `"change-me-in-production"` ships in code with no startup check that it has been replaced. | Add a `@model_validator(mode='after')` that raises if `SECRET_KEY == "change-me-in-production"` and `DEBUG == False` |
 | 5 | `image_service.py` | `save_image()` | **Medium** | Content-type validation only checks the client-supplied `file.content_type` string. An attacker can upload an executable or HTML file by spoofing `content-type: image/jpeg`. | Read the first ~12 bytes of `data` and check magic bytes (or use `python-magic`) |

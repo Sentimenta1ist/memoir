@@ -10,7 +10,7 @@ vi.mock('react-router-dom', () => ({
 }))
 
 vi.mock('../store/authStore', () => ({
-  useAuthStore: () => ({ user: { id: 'u1', email: 'admin@memoir.app' }, clear: vi.fn() }),
+  useAuthStore: () => ({ user: { id: 'u1', email: 'test@memoir.app' }, clear: vi.fn() }),
 }))
 
 let mockQueryData: EntryListResponse | undefined

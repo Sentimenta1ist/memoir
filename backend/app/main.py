@@ -10,40 +10,24 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.limiter import limiter
-from sqlalchemy import select
 
 from app.config import settings
-from app.database import init_db, AsyncSessionLocal
+from app.database import init_db
 import app.models  # noqa: F401 — ensure all models register with Base.metadata
-from app.models.user import User
 from app.routes.health import router as health_router
 from app.routes.auth import router as auth_router
 from app.routes.entries import router as entries_router
 from app.routes.images import router as images_router
-from app.services.auth import hash_password
 
 logger = logging.getLogger(__name__)
 
 _PLACEHOLDERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static", "placeholders")
 
 
-async def seed_default_user():
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(User).where(User.email == "admin@memoir.app"))
-        if result.scalar_one_or_none():
-            logger.info("Default user already exists")
-            return
-        user = User(email="admin@memoir.app", password_hash=hash_password("***REMOVED***"))
-        db.add(user)
-        await db.commit()
-        logger.info("Default user created: admin@memoir.app")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     await init_db()
-    await seed_default_user()
     yield
 
 

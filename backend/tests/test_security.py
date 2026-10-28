@@ -27,11 +27,11 @@ def test_default_secret_key_refused(monkeypatch):
         check_production_settings()
 
 
-def test_short_secret_key_refused(monkeypatch):
+def test_short_secret_key_warns(monkeypatch, caplog):
     monkeypatch.setattr("app.config.settings.DEBUG", False)
     monkeypatch.setattr("app.config.settings.SECRET_KEY", "asdf-1234")
-    with pytest.raises(RuntimeError):
-        check_production_settings()
+    check_production_settings()
+    assert "shorter than" in caplog.text
 
 
 def test_strong_secret_key_accepted(monkeypatch):

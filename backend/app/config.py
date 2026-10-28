@@ -1,3 +1,5 @@
+import logging
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,11 +26,13 @@ MIN_SECRET_KEY_LENGTH = 32
 
 
 def check_production_settings() -> None:
-    """Refuse to start in production with a guessable signing key."""
+    """Refuse to start in production with the public default key; warn on a short one."""
     if settings.DEBUG:
         return
-    if settings.SECRET_KEY == DEFAULT_SECRET_KEY or len(settings.SECRET_KEY) < MIN_SECRET_KEY_LENGTH:
-        raise RuntimeError(
-            f"SECRET_KEY must be set to a random value of at least {MIN_SECRET_KEY_LENGTH} characters "
-            "(openssl rand -hex 32)"
+    if settings.SECRET_KEY == DEFAULT_SECRET_KEY:
+        raise RuntimeError("SECRET_KEY is the public default; set a random value (openssl rand -hex 32)")
+    if len(settings.SECRET_KEY) < MIN_SECRET_KEY_LENGTH:
+        logging.getLogger(__name__).warning(
+            "SECRET_KEY is shorter than %d characters; replace it with openssl rand -hex 32",
+            MIN_SECRET_KEY_LENGTH,
         )

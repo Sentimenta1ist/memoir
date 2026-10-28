@@ -27,7 +27,7 @@ Coolify v4, Hetzner VPS. Cloudflare wildcard DNS `*` → VPS. Auto-deploy on pus
 
 ## Security defaults
 - `DEBUG=false` and `ALLOW_REGISTRATION=false` by default; Swagger only with `DEBUG=true`
-- With `DEBUG=false` startup fails if `SECRET_KEY` is the default or shorter than 32 chars
+- With `DEBUG=false` startup fails on the default `SECRET_KEY` and warns if it is shorter than 32 chars
 - Rate limits key on `CF-Connecting-IP` (Cloudflare in front of Coolify)
 - Uploads are always re-encoded to WebP; undecodable files are rejected, never stored as-is
 

@@ -71,7 +71,7 @@ docker compose up --build
 | Variable | Where | Meaning |
 |----------|-------|---------|
 | `DATABASE_URL` | backend | Must use the `postgresql+asyncpg://` scheme |
-| `SECRET_KEY` | backend | JWT signing key; with `DEBUG=false` the API refuses to start unless it is at least 32 characters (`openssl rand -hex 32`) |
+| `SECRET_KEY` | backend | JWT signing key; with `DEBUG=false` the API refuses to start on the default value and warns if it is shorter than 32 characters (`openssl rand -hex 32`) |
 | `DEBUG` | backend | `false` by default; `true` enables Swagger at `/docs` and SQL logging |
 | `ALLOW_REGISTRATION` | backend | `false` by default: `/auth/register` returns 403 |
 | `CORS_ORIGINS` | backend | JSON list of allowed origins |

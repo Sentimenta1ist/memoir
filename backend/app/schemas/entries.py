@@ -4,10 +4,13 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, Field
 
-NonEmptyStr = Annotated[str, Field(min_length=1)]
+MAX_TEXT_LENGTH = 20_000
+
+NonEmptyStr = Annotated[str, Field(min_length=1, max_length=MAX_TEXT_LENGTH)]
 # Blank strings are stored as NULL so optional sections stay truly empty
 OptionalText = Annotated[
-    str | None, BeforeValidator(lambda v: None if isinstance(v, str) and not v.strip() else v)
+    Annotated[str, Field(max_length=MAX_TEXT_LENGTH)] | None,
+    BeforeValidator(lambda v: None if isinstance(v, str) and not v.strip() else v),
 ]
 
 

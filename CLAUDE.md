@@ -25,7 +25,13 @@ Coolify v4, Hetzner VPS. Cloudflare wildcard DNS `*` → VPS. Auto-deploy on pus
 - Backend: `memoir-api.qear.net`, Dockerfile at `/backend/Dockerfile`
 - Backend CMD: `alembic upgrade head && uvicorn ...` (migrations on every start)
 
+## Security defaults
+- `DEBUG=false` and `ALLOW_REGISTRATION=false` by default; Swagger only with `DEBUG=true`
+- With `DEBUG=false` startup fails if `SECRET_KEY` is the default or shorter than 32 chars
+- Rate limits key on `CF-Connecting-IP` (Cloudflare in front of Coolify)
+- Uploads are always re-encoded to WebP; undecodable files are rejected, never stored as-is
+
 ## Known issues
-- No rate limiting on auth endpoints
-- Swagger open in production
 - No DB backups configured
+- Uploaded photos under `/static/` are public to anyone with the URL (uuid filenames)
+- Refresh tokens are not rotated or revocable

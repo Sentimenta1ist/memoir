@@ -6,6 +6,9 @@ import { useToastStore } from '../store/toastStore'
 
 type Mode = 'login' | 'register'
 
+// Registration is closed unless the build opts in (backend enforces it too)
+const ALLOW_REGISTRATION = import.meta.env.VITE_ALLOW_REGISTRATION === 'true'
+
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
@@ -57,7 +60,7 @@ export default function LoginPage() {
       <div className="login-box">
         <span className="logo login-logo">MEMOIR</span>
 
-        <div className="login-tabs">
+        {ALLOW_REGISTRATION && <div className="login-tabs">
           <button
             type="button"
             className={`login-tab${mode === 'login' ? ' active' : ''}`}
@@ -72,7 +75,7 @@ export default function LoginPage() {
           >
             Create account
           </button>
-        </div>
+        </div>}
 
         <form onSubmit={handleSubmit} style={{ marginTop: 20 }}>
           <input

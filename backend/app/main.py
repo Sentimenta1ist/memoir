@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.limiter import limiter
 
-from app.config import settings
+from app.config import settings, check_production_settings
 from app.database import init_db
 import app.models  # noqa: F401 — ensure all models register with Base.metadata
 from app.routes.health import router as health_router
@@ -26,12 +26,21 @@ _PLACEHOLDERS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    check_production_settings()
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     await init_db()
     yield
 
 
-app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
+# Swagger and the OpenAPI schema stay local-only
+app = FastAPI(
+    title=settings.APP_NAME,
+    debug=settings.DEBUG,
+    lifespan=lifespan,
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

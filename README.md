@@ -71,12 +71,15 @@ docker compose up --build
 | Variable | Where | Meaning |
 |----------|-------|---------|
 | `DATABASE_URL` | backend | Must use the `postgresql+asyncpg://` scheme |
-| `SECRET_KEY` | backend | JWT signing key; change it outside local use |
+| `SECRET_KEY` | backend | JWT signing key; with `DEBUG=false` the API refuses to start unless it is at least 32 characters (`openssl rand -hex 32`) |
+| `DEBUG` | backend | `false` by default; `true` enables Swagger at `/docs` and SQL logging |
+| `ALLOW_REGISTRATION` | backend | `false` by default: `/auth/register` returns 403 |
 | `CORS_ORIGINS` | backend | JSON list of allowed origins |
 | `UPLOAD_DIR` | backend | Image directory (default `uploads`) |
 | `VITE_API_URL` | frontend | API base URL, baked in at build time |
+| `VITE_ALLOW_REGISTRATION` | frontend | `true` shows the "Create account" tab, baked in at build time |
 
-Examples are in `backend/.env.example` and `frontend/.env.example`. The backend also reads `APP_NAME`, `DEBUG`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` and `REFRESH_TOKEN_EXPIRE_DAYS` (see `backend/app/config.py`).
+Examples are in `backend/.env.example` and `frontend/.env.example`. The backend also reads `APP_NAME`, `ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` and `REFRESH_TOKEN_EXPIRE_DAYS` (see `backend/app/config.py`).
 
 ## Testing
 

@@ -3,12 +3,12 @@ from pydantic import BaseModel, EmailStr, Field
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
 
 
 class TokenResponse(BaseModel):
@@ -18,7 +18,7 @@ class TokenResponse(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(max_length=2048)
 
 
 class UserResponse(BaseModel):

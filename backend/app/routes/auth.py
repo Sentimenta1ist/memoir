@@ -7,6 +7,7 @@ from app.limiter import limiter
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import RegisterRequest, LoginRequest, TokenResponse, RefreshRequest, UserResponse
@@ -40,6 +41,8 @@ async def get_current_user(
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 async def register(request: Request, body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    if not settings.ALLOW_REGISTRATION:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration is closed")
     result = await db.execute(select(User).where(User.email == body.email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
@@ -70,7 +73,8 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def refresh(request: Request, body: RefreshRequest, db: AsyncSession = Depends(get_db)):
     try:
         payload = decode_token(body.refresh_token)
         if payload.get("type") != "refresh":

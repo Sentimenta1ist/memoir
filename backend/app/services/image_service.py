@@ -24,12 +24,13 @@ def _valid_magic(data: bytes) -> bool:
     return (
         h[:3] == b"\xff\xd8\xff"
         or h[:8] == b"\x89PNG\r\n\x1a\n"
-        or h[:4] == b"RIFF"
+        or (h[:4] == b"RIFF" and h[8:12] == b"WEBP")
         or h[:6] in (b"GIF87a", b"GIF89a")
     )
 
 
-def _compress(data: bytes, original_suffix: str) -> tuple[bytes, str]:
+def _compress(data: bytes) -> bytes:
+    """Re-encode as WebP. Anything Pillow can't decode is rejected, never stored as-is."""
     try:
         img = Image.open(BytesIO(data))
         img = ImageOps.exif_transpose(img)
@@ -50,26 +51,31 @@ def _compress(data: bytes, original_suffix: str) -> tuple[bytes, str]:
 
         buf = BytesIO()
         img.save(buf, format="WebP", quality=WEBP_QUALITY, method=4)
-        return buf.getvalue(), ".webp"
+        return buf.getvalue()
     except Exception:
-        logger.warning("Image compression failed, using original", exc_info=True)
-        return data, original_suffix
+        logger.warning("Image compression failed, rejecting upload", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
+
+
+async def _read_limited(file: UploadFile) -> bytes:
+    # Stop reading as soon as the limit is crossed instead of buffering the whole body
+    data = await file.read(MAX_SIZE + 1)
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large (max 10MB)")
+    return data
 
 
 async def save_image(db: AsyncSession, entry_id: str, file: UploadFile) -> ImageModel:
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only image files allowed")
 
-    data = await file.read()
-    if len(data) > MAX_SIZE:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large (max 10MB)")
+    data = await _read_limited(file)
 
     if not _valid_magic(data):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-    original_suffix = Path(file.filename).suffix if file.filename else ""
-    data, suffix = _compress(data, original_suffix)
-    filename = f"{uuid.uuid4()}{suffix}"
+    data = _compress(data)
+    filename = f"{uuid.uuid4()}.webp"
     dest = Path(settings.UPLOAD_DIR) / filename
     dest.write_bytes(data)
 

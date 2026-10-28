@@ -24,7 +24,9 @@ async def db_session(tmp_path):
 
 
 @pytest_asyncio.fixture
-async def client(db_session):
+async def client(db_session, monkeypatch):
+    # Registration is closed by default in production; tests create users through it
+    monkeypatch.setattr("app.config.settings.ALLOW_REGISTRATION", True)
     async def override_get_db():
         yield db_session
 

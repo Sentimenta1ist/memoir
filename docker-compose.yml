@@ -8,8 +8,9 @@ services:
       POSTGRES_PASSWORD: memoir
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # Only localhost: never publish the dev database to the network
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U memoir"]
       interval: 10s
@@ -22,6 +23,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://memoir:memoir@postgres:5432/memoir
       SECRET_KEY: dev-secret
+      DEBUG: "true"
+      ALLOW_REGISTRATION: "true"
       CORS_ORIGINS: '["http://localhost:5173"]'
     volumes:
       - uploads:/app/uploads
@@ -34,6 +37,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:8000
+        VITE_ALLOW_REGISTRATION: "true"
     ports:
       - "5173:80"
     depends_on:

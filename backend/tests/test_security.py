@@ -53,6 +53,13 @@ async def test_entries_limit_capped(client, auth_headers):
 
 
 @pytest.mark.asyncio
+async def test_entries_limit_boundary(client, auth_headers):
+    # Frontend loads the whole journal with limit=500
+    assert (await client.get("/entries?page=1&limit=500", headers=auth_headers)).status_code == 200
+    assert (await client.get("/entries?page=1&limit=501", headers=auth_headers)).status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_entry_text_too_long(client, auth_headers):
     resp = await client.post(
         "/entries",
